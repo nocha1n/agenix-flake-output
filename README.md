@@ -1,5 +1,12 @@
 # agenix - [age](https://github.com/FiloSottile/age)-encrypted secrets for NixOS
 
+> # NOTE ABOUT THIS FORK
+> This is an experimental version of the agenix package which doesn't read from a `./secrets.nix` file but instead reads an attrset `.#secrets` from a flake.
+> See `./example/flake.nix` for how to adapt an existing `./secrets.nix` file.
+> My reasoning for wanting such a script is that I can let my flake code generate a correct secrets attrs from `self.nixosConfigurations` in my flake.
+>
+> The rest of the readme and all documentation is left as in the original repo. If I develop this further I will create my own repository instead.
+
 `agenix` is a small and convenient Nix library for securely managing and deploying secrets using common public-private SSH key pairs:
 You can encrypt a secret (password, access-token, etc.) on a source machine using a number of public SSH keys,
 and deploy that encrypted secret to any another target machine that has the corresponding private SSH key of one of those public keys.  
