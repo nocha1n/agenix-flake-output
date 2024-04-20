@@ -2,6 +2,7 @@
   lib,
   stdenv,
   age,
+  git,
   jq,
   nix,
   mktemp,
@@ -17,6 +18,7 @@ in
     version = "0.15.0";
     src = substituteAll {
       inherit ageBin version;
+      gitBin = "${git}/bin/git";
       jqBin = "${jq}/bin/jq";
       nixInstantiate = "${nix}/bin/nix-instantiate";
       mktempBin = "${mktemp}/bin/mktemp";
@@ -32,7 +34,7 @@ in
 
       HOME=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
       function cleanup {
-        rm -rf $HOME
+        rm -rf $HOME || true
       }
       trap "cleanup" 0 2 3 15
 

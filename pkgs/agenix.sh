@@ -26,8 +26,8 @@ function show_help () {
   echo ' '
   echo 'If STDIN is not interactive, EDITOR will be set to "cp /dev/stdin"'
   echo ' '
-  echo 'RULES environment variable with path to Nix file specifying recipient public keys.'
-  echo "Defaults to './secrets.nix'"
+  echo 'RULES environment variable with path to Nix flake with a secrets output specifying recipient public keys.'
+  echo "Defaults to the closest git root directory or the current directory."
   echo ' '
   echo "agenix version: @version@"
   echo "age binary path: @ageBin@"
@@ -101,7 +101,7 @@ while test $# -gt 0; do
   esac
 done
 
-RULES=${RULES:-./secrets.nix}
+RULES="${RULES:-"$(@gitBin@ rev-parse --show-toplevel 2> /dev/null || printf "%s" "$PWD")"}"
 function cleanup {
     if [ -n "${CLEARTEXT_DIR+x}" ]
     then
@@ -115,7 +115,7 @@ function cleanup {
 trap "cleanup" 0 2 3 15
 
 function keys {
-    (@nixInstantiate@ --json --eval --strict -E "(let rules = import $RULES; in rules.\"$1\".publicKeys)" | @jqBin@ -r .[]) || exit 1
+    (@nixInstantiate@ --experimental-features "flakes" --json --eval --strict -E "(let rules = (builtins.getFlake \"path:${RULES}\").secrets; in rules.\"$1\".publicKeys)" | @jqBin@ -r .[]) || exit 1
 }
 
 function decrypt {
@@ -123,7 +123,7 @@ function decrypt {
     KEYS=$2
     if [ -z "$KEYS" ]
     then
-        err "There is no rule for $FILE in $RULES."
+        err "There is no rule for $FILE in $RULES#secrets."
     fi
 
     if [ -f "$FILE" ]
@@ -187,7 +187,7 @@ function edit {
 }
 
 function rekey {
-    FILES=$( (@nixInstantiate@ --json --eval -E "(let rules = import $RULES; in builtins.attrNames rules)"  | @jqBin@ -r .[]) || exit 1)
+    FILES=$( (@nixInstantiate@ --experimental-features "flakes" --json --eval -E "(let rules = (builtins.getFlake \"path:${RULES}\").secrets; in builtins.attrNames rules)"  | @jqBin@ -r .[]) || exit 1)
 
     for FILE in $FILES
     do
